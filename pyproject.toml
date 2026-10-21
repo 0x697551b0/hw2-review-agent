@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hw2-review-agent"
+version = "1.0.0"
+description = "审查 Agent：把 Homework 1 的 codeguard 接入工作流，产出契约化审查结论（软件工程实践 Homework 2）"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "刘浩天", email = "934813156@qq.com" }]
+keywords = ["agent", "workflow", "code-review", "codeguard", "se2026"]
+#: codeguard 是必需依赖，但本仓库**不通过 pip 强装**它：
+#: 四个仓库放在同一目录时，locate.py 会自动发现；也支持 pip install -e ../codeguard
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+review-agent = "review_agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["review_agent*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
