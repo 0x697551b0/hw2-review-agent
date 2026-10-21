@@ -1,9 +1,7 @@
 """归一化（normalize.py）的测试。
 
-重点守两件事：
-
-1. **稳定 ID**：行号变了 ID 不能变，否则跨轮次就无法追踪"这条修好没有"；
-2. **门禁计算**：passed / blocking / counts / score 必须可解释。
+盯两件事：行号变了 ID 不能变，不然跨轮次没法追"这条修好没有"；passed、blocking、
+counts、score 这些门禁指标得算对、说得清。
 """
 
 from __future__ import annotations
@@ -49,7 +47,7 @@ def test_normalize_maps_fields() -> None:
 
 
 def test_finding_id_stable_across_line_change() -> None:
-    """行号变化不影响 ID —— 这是跨轮次闭环的前提。"""
+    """行号变不影响 ID，这是跨轮次闭环的前提。"""
     first = stable_finding_id("CG106", "a.py", "SQL 语句由拼接构造")
     second = stable_finding_id("CG106", "a.py", "SQL 语句由拼接构造")
     assert first == second

@@ -1,7 +1,6 @@
-"""
-ReviewAgent —— 审查 Agent。
+"""审查 Agent。
 
-定位：Homework 2「代码审查流程」工作流的**第二个节点**，复用 Homework 1 的 codeguard。
+工作流里的第二个节点，审查能力来自 Homework 1 的 codeguard：
 
     from review_agent import ReviewAgent, ReviewConfig
 

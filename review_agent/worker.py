@@ -1,4 +1,4 @@
-"""``python -m review_agent.worker``：子进程模式的一次 JSON 往返。"""
+"""python -m review_agent.worker：子进程模式的一次 JSON 往返。"""
 
 from __future__ import annotations
 
@@ -14,9 +14,9 @@ from review_agent.protocol import AgentRequest, AgentResponse, dumps
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    # stdout 模式下必须先把编码切到 UTF-8：Windows 控制台默认 GBK，
-    # 而 summary 里带「❌」「✅」这类符号，直接 print 会抛 UnicodeEncodeError。
-    # 编排器默认走 --response-file，所以这条路径平时跑不到 —— 正因如此才需要显式测。
+    # stdout 模式下得先把编码切到 UTF-8：Windows 控制台默认 GBK，summary 里带
+    # ❌/✅ 这类符号，直接 print 就是 UnicodeEncodeError。编排器默认走
+    # --response-file，这条路径平时跑不到，所以更要显式测。
     _ensure_utf8_stdout()
     parser = argparse.ArgumentParser(
         prog="python -m review_agent.worker",

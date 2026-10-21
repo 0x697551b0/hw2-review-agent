@@ -1,4 +1,4 @@
-"""``python -m review_agent`` 的入口。"""
+"""python -m review_agent 的入口。"""
 
 from __future__ import annotations
 

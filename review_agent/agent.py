@@ -1,21 +1,9 @@
-"""
-ReviewAgent：把 Homework 1 的 codeguard 变成一个工作流节点。
+"""审查 Agent：把 Homework 1 的 codeguard 包装成一个工作流节点。
 
-这个 Agent 本身刻意做得很"薄"，它提供的是**四件 codeguard 单独做不到的事**：
-
-1. **可定位**：不要求预先 ``pip install``，同目录下放着就能用（见 ``locate.py``）；
-2. **可契约化**：把 codeguard 的 ``ReviewReport`` 归一化成工作流契约，并给每条
-   发现分配跨轮次稳定的 ID（见 ``normalize.py``）；
-3. **可门禁**：把"哪些级别算不合格"变成显式配置，输出 ``passed`` 与可解释的判定
-   明细，供编排器做条件分支；
-4. **可并行**：静态审查按文件 fan-out，文件数多时线性缩短墙钟时间。
-
-两种模式：
-
-- ``static``：只跑确定性规则引擎。快、零成本、结果可复现 —— 适合放进循环反复跑；
-- ``llm``：跑 codeguard 的完整 Agent 闭环（推理 → 工具调用 → 观察 → 报告），
-  能发现规则覆盖不到的语义问题。慢、要 Key，但结论更深。加 ``mock=True``
-  可用脚本化模型离线体验这条链路。
+本模块自己不做审查，干的活是定位 codeguard、调用它、把结果归一化成契约，
+再算出 passed。两种模式：static 只跑确定性规则引擎（按文件并行，多文件时线
+性缩短墙钟时间），llm 跑 codeguard 的完整 Agent 闭环，能发现规则覆盖不到的
+语义问题，慢一点也要 Key，加 mock=True 可以离线走一遍。
 """
 
 from __future__ import annotations
@@ -76,7 +64,7 @@ class ReviewOutcome:
         return bool(self.metrics["passed"])
 
     def summary(self) -> str:
-        """一句话结论。"""
+        """结论摘要。"""
         metrics = self.metrics
         counts = metrics["counts"]
         pieces = [
@@ -216,8 +204,8 @@ class ReviewAgent:
 
         report = result.report
         findings = normalize_findings(report.findings, root=root)
-        # 模型可能给出报告里没覆盖到的问题，但 codeguard 已把静态命中合并进报告，
-        # 因此这里不再额外合并，避免同一问题重复计数。
+        # 模型可能报静态规则没覆盖到的问题，但 codeguard 已经把静态命中并进报告了，
+        # 这里再合一次就会重复计数。
         markdown = ""
         try:
             markdown = self.codeguard.report.render_markdown(report)
@@ -248,7 +236,7 @@ class ReviewAgent:
         )
 
     def _build_codeguard_config(self, root: Path) -> Any:
-        """把本 Agent 的配置翻译成 codeguard 的配置（字段名不同，需显式映射）。"""
+        """翻译成 codeguard 的 Config（两边字段名不一样，得显式映射）。"""
         config_cls = self.codeguard.Config
         return config_cls(
             api_key=self.config.api_key,
@@ -264,7 +252,7 @@ class ReviewAgent:
 
     # 渲染
     def _render_markdown(self, findings: Sequence[FindingContract], *, mode: str) -> str:
-        """生成人类可读的审查报告（契约层自有渲染，不依赖 codeguard 的报告样式）。"""
+        """人类可读的审查报告。自带渲染，两种模式的版式因此能统一。"""
         counts = count_by_severity(findings)
         lines = [
             "# 代码审查报告",
@@ -300,7 +288,7 @@ class ReviewAgent:
 
     @staticmethod
     def _root(paths: Sequence[Path]) -> Path:
-        """归一化基准：取所有目标文件的共同父目录，保证报告里都是相对路径。"""
+        """归一化基准：所有目标文件的共同父目录，这样报告里都是相对路径。"""
         if not paths:
             return Path.cwd()
         parents = [str(Path(p).resolve().parent) for p in paths]

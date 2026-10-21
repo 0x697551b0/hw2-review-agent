@@ -1,9 +1,7 @@
-"""
-审查 Agent 配置。环境变量前缀 ``REVIEW_``。
+"""审查 Agent 的配置。环境变量前缀 REVIEW_。
 
-关键取舍：**阻断级（blocking）是配置项而不是硬编码**。"high 及以上算不合格"是团队的
-质量门禁策略，不是审查 Agent 的固有属性。把它放进配置，工作流就能按项目阶段调整
-门禁（早期只要挡住 critical，发版前收紧到 high），而不必改代码。
+blocking（哪些级别算不合格）是配置项，不是写死的常量："high 及以上不算合格"是
+团队的质量策略，早期只挡 critical、发版前收紧到 high，改配置就行，不用动代码。
 """
 
 from __future__ import annotations
@@ -23,7 +21,7 @@ MODES: tuple[str, ...] = ("static", "llm")
 
 
 def load_dotenv(path: str | Path = ".env", *, override: bool = False) -> dict[str, str]:
-    """极简 ``.env`` 解析（与 codeguard / coding_agent 保持同一实现，便于阅读迁移）。"""
+    """极简 .env 解析，和 codeguard 那边保持同一份实现。"""
     file_path = Path(path)
     if not file_path.is_file():
         return {}
@@ -57,13 +55,10 @@ class ReviewConfig:
     mode: str = "static"
     #: 阻断级别（低级别不阻断流水线）
     blocking: tuple[str, ...] = ("critical", "high")
-    #: 待审查文件的 glob
     patterns: tuple[str, ...] = ("*.py",)
-    #: 并行审查的文件数（static 模式下按文件并行）
     parallel: int = 4
     #: 单次审查最多处理多少个文件（防止误指到超大目录）
     max_files: int = 200
-    #: static 模式下只跑指定规则（空表示全部）
     rules: tuple[str, ...] = ()
 
     # ---- 输出 ----
@@ -95,8 +90,7 @@ class ReviewConfig:
             kwargs[f.name] = _coerce(os.environ[env_name], f.type, f.name)
         kwargs.update({k: v for k, v in overrides.items() if v is not None})
         config = cls(**kwargs)
-        # 兼容 Homework 1 的变量名：mode=llm 时透传给 codeguard，
-        # 让"同一个 .env 能给两个项目用"这件事真的成立（而不是只写在文档里）
+        # 兼容 Homework 1 的变量名：mode=llm 时透传给 codeguard，同一个 .env 两个项目都能用
         if not config.api_key.strip():
             config.api_key = os.environ.get("CODEGUARD_API_KEY", "").strip()
         if config.base_url == cls().base_url:

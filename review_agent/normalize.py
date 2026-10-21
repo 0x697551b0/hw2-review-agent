@@ -1,14 +1,11 @@
-"""
-归一化：把 codeguard 的输出翻译成工作流契约。
+"""归一化：把 codeguard 的输出翻译成工作流契约。
 
-为什么必须"翻译"而不是直接透传 codeguard 的数据结构：
+不直接透传它的数据结构，一是 codeguard 是独立产品，ReviewReport 会随它自己演进，
+工作流不该被上游字段改名牵着走；二是下游其实只要"文件 + 行号 + 规则 + 级别 +
+是否可修 + 稳定 ID"这几样。
 
-- codeguard 是 Homework 1 的独立产品，它的 ``ReviewReport`` 会随它自己的演进而变；
-  工作流不该被上游产品的字段变更牵着走。
-- 下游修复 Agent 只需要"文件 + 行号 + 规则 + 级别 + 是否可修 + 稳定 ID"这六件事。
-- 稳定 ID 是关键：第 1 轮修完、第 2 轮复审后，行号会因为插入代码而整体位移，
-  如果 ID 用行号构造，就永远对不上"这条到底修好没有"。这里用
-  ``规则 + 文件 + 归一化标题`` 做哈希，行号只是展示信息。
+稳定 ID 用「规则 + 文件 + 归一化标题」做哈希，行号只当展示信息用。第 1 轮修完、
+第 2 轮复审，行号会整体位移，用行号构造的 ID 永远对不上"这条到底修好没有"。
 """
 
 from __future__ import annotations
@@ -44,8 +41,8 @@ def stable_finding_id(rule_id: str, file: str, title: str, *, occurrence: int = 
     """
     生成跨轮次稳定的发现 ID。
 
-    ``occurrence`` 用于同文件同规则同标题的重复命中（例如一个文件里有 3 处
-    未使用导入），它们共享哈希，靠序号区分。
+    occurrence 区分同文件、同规则、同标题的重复命中（比如一个文件里有 3 处未使用
+    导入），它们哈希一样，靠序号分开。
     """
     basis = f"{rule_id}|{_normalize_file(file)}|{_normalize_title(title)}"
     digest = hashlib.sha1(basis.encode("utf-8")).hexdigest()[:8].upper()
@@ -60,10 +57,10 @@ def normalize_findings(
     default_source: str = "static",
 ) -> list[FindingContract]:
     """
-    把 codeguard 的 ``Finding``（或等价字典）批量转成 :class:`FindingContract`。
+    批量转成 FindingContract。
 
-    入参既接受 dataclass 实例也接受 dict，这样即便将来 codeguard 把结果先序列化成
-    JSON 再交过来，这里也不用改。
+    入参接受 dataclass 实例也接受 dict，将来 codeguard 改成先序列化成 JSON 再交
+    过来，这里也不用动。
     """
     base = Path(root).resolve()
     contracts: list[FindingContract] = []
@@ -130,7 +127,7 @@ def summarize(
 
 
 def score(findings: Sequence[FindingContract]) -> int:
-    """0~100 的健康分。**只用于趋势对比**，不能当作"合格证明"。"""
+    """0~100 的健康分。只用于趋势对比，不能当合格证明。"""
     penalty = sum(_SCORE_PENALTY.get(f.severity, 0) for f in findings)
     return max(0, min(100, 100 - penalty))
 
@@ -175,8 +172,8 @@ def resolve_targets(
     """
     枚举待审查文件。
 
-    显式 ``patterns`` 而不是"审查一切"，因为工作流里的目标目录常常还包含
-    ``draft_manifest.json``、报告之类非源码产物，扫它们只会制造噪声。
+    显式传 patterns，是因为目标目录里常常还躺着 draft_manifest.json、报告这些
+    非源码产物，扫进去全是噪声。
     """
     base = Path(root).resolve()
     if not base.exists():

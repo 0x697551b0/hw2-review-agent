@@ -1,23 +1,13 @@
-"""
-定位 codeguard：审查 Agent 对它的全部依赖都收敛在这里。
+"""找 codeguard。整个仓库对它的依赖都收在这个文件里。
 
-为什么需要这么一段"找包"的代码，而不是直接 ``import codeguard``：
+Homework 2 的四个仓库是各自独立的，clone 到同一个目录下协作。要求评审者先跑
+pip install -e ../codeguard 才能用，等于给可用性挖坑：网络不通、虚拟环境不对、
+系统 Python 被锁，哪一样都会让"一条命令跑起来"变成奢望。
 
-Homework 2 的四个仓库是**四个独立仓库**，它们被 clone 到同一个目录下协作。
-要求评审者先 ``pip install -e ../codeguard`` 才能跑，是给可用性挖坑：网络不通、
-虚拟环境不对、系统 Python 被锁，任何一种情况都会让"一条命令跑起来"变成奢望。
+所以按 已装好的包 → HW2_PACKAGES_HOME → --codeguard-path → 附近目录 的顺序找，
+找到后只把那一层插进 sys.path，不写 site-packages，进程退出就失效。
 
-所以这里按优先级找：
-
-1. 已经装好的包（``import codeguard`` 成功就用它）；
-2. ``HW2_PACKAGES_HOME`` 环境变量里列出的目录；
-3. ``--codeguard-path`` 显式指定的目录；
-4. **当前工作目录 / 本仓库 / 本仓库上级目录及其直接子目录**里含 ``codeguard/__init__.py``
-   的那一层。
-
-第 4 条覆盖了"把四个仓库放在同一个文件夹"这个最常见的交付形态：无论从哪个仓库里
-执行命令，都能找到隔壁的 codeguard。找到后只是把那一层插进 ``sys.path``，**不改动
-文件系统、不写 site-packages**，退出即失效，不会污染环境。
+最后一条覆盖面最广：无论从哪个仓库里执行命令，都能找到隔壁的 codeguard。
 """
 
 from __future__ import annotations
@@ -40,12 +30,10 @@ _MAX_ANCESTORS = 5
 
 
 def ensure_codeguard(*, explicit: str | Path | None = None, required_version: str = "") -> ModuleType:
-    """
-    确保 ``codeguard`` 可导入并返回模块对象。
+    """确保 codeguard 能 import，返回模块对象。
 
-    参数：
-        explicit: 显式指定的 codeguard 源码根目录（该目录下应有 ``codeguard/__init__.py``）
-        required_version: 若给出，则要求已加载的 codeguard 版本不低于此值
+    explicit 是显式给的源码根目录（下面得有 codeguard/__init__.py）；
+    required_version 给定时校验最低版本。
     """
     module = _try_import()
     if module is None:

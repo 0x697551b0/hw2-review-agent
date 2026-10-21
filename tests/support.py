@@ -1,8 +1,7 @@
 """测试辅助：临时目录、样例代码、断言小工具。
 
-自己实现 ``tempdir()`` 而不是直接用 ``tempfile.TemporaryDirectory``：某些受限环境里
-系统临时目录不可写，逐级尝试并退回到仓库内的 ``.testtmp``，可以避免整套测试在开始
-之前就崩掉。
+tempdir() 没用 tempfile.TemporaryDirectory：某些受限环境里系统临时目录不可写，
+逐级试过去，最后退回仓库内的 .testtmp，免得整套测试还没开始就崩。
 """
 
 from __future__ import annotations
@@ -67,9 +66,8 @@ def expect_raises(exc_type: type, func, *args, **kwargs) -> BaseException:
     raise AssertionError(f"期望抛出 {exc_type.__name__}，但没有任何异常")
 
 
-#: 一份"问题齐全"的样例源码：覆盖 9 种可自动修复的规则里的大部分，
-#: 用于验证归一化、门禁与可修复性分类。字面量密钥用拼接构造，
-#: 避免本仓库自身被扫描时命中 CG105。
+#: 一份"问题齐全"的样例源码，覆盖 9 条可自动修规则里的大部分，用来验证归一化、
+#: 门禁和可修复性分类。字面量密钥用拼接构造，免得本仓库自己被扫的时候命中 CG105。
 BUGGY_SOURCE = (
     '"""示例：用户存储服务（故意保留典型问题）。"""\n'
     "\n"

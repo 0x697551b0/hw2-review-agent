@@ -1,7 +1,7 @@
-"""ReviewAgent 的端到端测试（static 模式，不访问网络）。
+"""ReviewAgent 的端到端测试（static 模式，不联网）。
 
-这组用例是"复用 Homework 1 的 codeguard"这件事的验收：审查 Agent 应当真的把
-codeguard 的规则引擎跑起来，并且结论能通过契约交给下游。
+这组用例要证明审查 Agent 真的把 codeguard 的规则引擎跑起来了，结论也能通过契约
+交给下游。
 """
 
 from __future__ import annotations
@@ -175,12 +175,12 @@ def test_missing_codeguard_message_is_actionable() -> None:
 
 def test_worker_stdout_mode_survives_non_ascii() -> None:
     """
-    回归测试：worker 的 **stdout 模式**必须能输出中文/emoji。
+    回归测试：worker 的 stdout 模式必须能输出中文和 emoji。
 
-    这条路径曾经是坏的：`cli.py` 会把 stdout 重配成 UTF-8，而 `worker.py` 漏了这一步，
-    Windows 控制台（GBK）下 summary 里的「❌」直接抛 UnicodeEncodeError，进程退出码 1。
-    编排器默认用 `--response-file` 模式，所以这个缺陷不会在正常流程里暴露 ——
-    只有显式测 stdout 模式才能拦住它。
+    这条路径以前是坏的：cli.py 会把 stdout 重配成 UTF-8，worker.py 漏了这一步，
+    Windows 控制台（GBK）下 summary 里的 emoji 直接抛 UnicodeEncodeError，退出码 1。
+    编排器默认用 --response-file，不走 stdout，所以正常流程里根本暴露不出来，只有
+    显式测 stdout 才拦得住。
     """
     import json
     import subprocess
@@ -217,10 +217,10 @@ def test_worker_stdout_mode_survives_non_ascii() -> None:
 
 def test_cli_missing_path_returns_2() -> None:
     """
-    回归测试：CLI 遇到不存在的路径应当给**一行错误 + 退出码 2**，而不是 traceback。
+    回归测试：CLI 遇到不存在的路径应当给一行错误 + 退出码 2，别让用户看 traceback。
 
-    `FileNotFoundError` 是内置异常，不会被 `ReviewAgentError` 捕获 —— 这条分支曾经漏掉，
-    用户打错路径时看到的是一整屏堆栈。
+    FileNotFoundError 是内置异常，不会被 ReviewAgentError 接住，这条分支曾经漏过，
+    路径打错时用户看到的是一整屏堆栈。
     """
     from review_agent.cli import main
 

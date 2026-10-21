@@ -1,8 +1,7 @@
 """可修复性表（fixability.py）的测试。
 
-这张表是审查 Agent 与修复 Agent 之间的**共享词汇表**。若两边不一致，就会出现
-"审查说能自动修、修复却没有策略"的静默失败。因此这里不只测本仓库的行为，还测
-"这张表本身是自洽的"。
+这张表 review-agent 和 fix-agent 共用，两边对不上就会出现"审查说能自动修、修复却
+没有策略"的静默失败，所以这里不只测本仓库的行为，也测这张表自己是不是自洽。
 """
 
 from __future__ import annotations
@@ -32,7 +31,7 @@ def test_known_unfixable_rules_have_reasons() -> None:
 
 
 def test_unknown_rule_defaults_to_unfixable() -> None:
-    """未知规则宁可保守：判为不可修，交给人工。"""
+    """未知规则一律判不可修，交给人工。"""
     verdict = classify("CG999")
     assert not verdict.fixable
     assert "未知" in verdict.reason

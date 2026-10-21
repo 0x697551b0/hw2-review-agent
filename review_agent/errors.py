@@ -1,8 +1,7 @@
-"""审查 Agent 的异常体系。
+"""异常体系。
 
-最特殊的一条是 :class:`CodeGuardNotFound`：审查 Agent 的定位就是"把 codeguard 接进
-工作流"，因此 codeguard 缺失必须给出**可执行的修复建议**，而不是一句
-``ModuleNotFoundError``。
+CodeGuardNotFound 单独一个类，因为它要带一条照着做就能修好的提示，光抛一句
+ModuleNotFoundError 没用。
 """
 
 from __future__ import annotations

@@ -1,11 +1,8 @@
-"""
-审查 Agent 命令行。
+"""审查 Agent 的命令行。
 
-两个命令最常用：
-
-- ``review``：审查一个目录，默认打印人类可读的报告（`--json` 输出契约 JSON）；
-- ``doctor``：检查 codeguard 是否找得到、版本多少、从哪个路径加载 —— 环境问题的
-  第一诊断入口，比让人对着 ``ModuleNotFoundError`` 猜要友好得多。
+review 审查目录，默认打印可读报告，--json 给契约 JSON；doctor 查 codeguard 找不
+找得到、版本多少、从哪加载的，环境出问题先跑它；rules 打印可修复性对照表；info
+打版本和配置。
 """
 
 from __future__ import annotations
@@ -98,9 +95,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"❌ {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
     except FileNotFoundError as exc:
-        # 目标路径不存在属于"调用方输入问题"，应当给一行清晰的错误而不是 traceback。
-        # 注意 FileNotFoundError 是内置异常，不会被 ReviewAgentError 捕获 —— 这条分支
-        # 曾经漏掉，导致路径打错时用户看到的是一整屏堆栈。
+        # 目标路径不存在是调用方输入问题，给一行清晰的错误就够了。这条分支曾经漏掉过：
+        # FileNotFoundError 是内置异常，不会被 ReviewAgentError 接住，路径打错就是整屏堆栈。
         print(f"❌ 找不到路径：{exc}", file=sys.stderr)
         return 2
 
